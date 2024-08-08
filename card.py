@@ -49,4 +49,18 @@ class Card:
             Best Case Complexity:
             Worst Case Complexity:
         """
-        raise NotImplementedError
+        
+        self.color = color
+        self.label = label
+
+    def __lt__(self, other: 'Card') -> bool:
+        if self.color == other.color:
+            return self.label < other.label
+        return self.color < other.color
+    
+    def __le__(self, other: 'Card') -> bool:
+            return self < other or self == other
+    
+    def __eq__(self, other: 'Card') -> bool:
+        return self.color == other.color and self.label == other.label
+            
