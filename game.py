@@ -1,4 +1,6 @@
 from data_structures.referential_array import ArrayR
+from data_structures.queue_adt import CircularQueue
+from data_structures.stack_adt import ArrayStack
 from player import Player
 from card import CardColor, CardLabel, Card
 from random_gen import RandomGen
@@ -23,7 +25,13 @@ class Game:
             Best Case Complexity:
             Worst Case Complexity:
         """
-        raise NotImplementedError
+        self.players = None
+        self.draw_pile = None
+        self.discard_pile = None
+        self.current_player = None
+        self.current_color = None
+        self.current_label = None
+
 
     def generate_cards(self) -> ArrayR[Card]:
         """
@@ -86,7 +94,40 @@ class Game:
             Best Case Complexity:
             Worst Case Complexity:
         """
-        raise NotImplementedError
+        #Use the array of Player objects being passed to this method to populate the players attribute of the Game object.
+        self.players = CircularQueue(len(players))
+        for player in players:
+            self.players.append(player)
+
+        # Call the method generate_cards to get an ArrayR of all cards
+        cards_array = self.generate_cards()
+
+        #Deal the cards one by one to each player.
+        dealt=0
+        for index in range(0, len(self.players)*Constants.NUM_CARDS_AT_INIT):
+            player = self.players.serve()
+            player.add_card(cards_array[index])
+            self.players.append(player)    
+            dealt+=1        
+        
+        #Pass the remaining cards into the draw_pile
+        self.draw_pile = ArrayStack(Constants.DECK_SIZE - dealt)
+        for i in range(dealt, len(cards_array)):
+            self.draw_pile.push(cards_array[i])
+
+        #Draw the first card
+        self.discard_pile = ArrayStack(Constants.DECK_SIZE)
+        legal_draw = False
+        while legal_draw == False:
+            first_draw = self.draw_pile.pop()
+            if first_draw.label < 9 or first_draw.color < 3:
+                legal_draw = True
+            self.discard_pile.push(first_draw)
+        
+        #update current card attributes
+        current_card = self.discard_pile.peek()
+        self.current_color = current_card.color
+        self.current_label = current_card.label
 
     def crazy_play(self, card: Card) -> None:
         """
@@ -200,3 +241,4 @@ def test_case():
 
 if __name__ == '__main__':
     test_case()
+
