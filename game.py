@@ -131,7 +131,13 @@ class Game:
 
     def crazy_play(self, card: Card) -> None:
         """
-        Method to play a crazy card
+        a method that takes a Card object and changes the game's current_color instance variable to a randomly chosen color. To choose the color, we use the following code: CardColor(RandomGen.randint(0,3)) where RandomGen is an instance of the RandomGen class and CardColor is an enum class representing the colors of the cards. If its a CRAZY Draw 4 card, this method makes the next player draw 4 cards from the draw_pile. The method should return None.
+
+        Redundant calls to RandomGen.randint(0,3) will result in a loss of marks similar to as is explained with RandomGen.random_shuffle(temp_array) in Task 4.
+
+        You can assume that the card being passed is a CRAZY card.
+
+        Try to reuse predefined methods where possible to achieve this. Not reusing methods will result in a loss of marks.
 
         Args:
             card (Card): The card to be played
@@ -143,11 +149,21 @@ class Game:
             Best Case Complexity:
             Worst Case Complexity:
         """
-        raise NotImplementedError
+        self.current_color = CardColor(RandomGen.randint(0,3))
+        self.current_label = card.label
+        
+        #wild card mechanic
+        if card.label == 14:
+            player = self.players.serve()  
+            for i in range(4):
+                player.add_card(self.draw_card(player, False))
+            self.players.append(player)
+
+
 
     def play_reverse(self) -> None:
         """
-        Method to play a reverse card
+        a method that changes the direction of play. If the direction of play is clockwise, it should be changed to anti-clockwise, and vice versa. The method should return None.
 
         Args:
             None
@@ -159,7 +175,17 @@ class Game:
             Best Case Complexity:
             Worst Case Complexity:
         """
-        raise NotImplementedError
+        stack = ArrayStack(Constants.MAX_PLAYERS)
+        
+        while not self.players.is_empty():
+            try:
+                stack.push(self.players.serve())
+            except Exception as e:
+                break
+            
+        self.players.clear()
+        for i in range(0, len(stack)):
+            self.players.append(stack.pop())
 
     def play_skip(self) -> None:
         """
@@ -175,11 +201,11 @@ class Game:
             Best Case Complexity:
             Worst Case Complexity:
         """
-        raise NotImplementedError
+        self.players.append(self.players.serve())
 
     def draw_card(self, player: Player, playing: bool) -> Card | None:
         """
-        Method to draw a card from the deck
+        A method that takes a Player object as an argument and draws a Card object from the draw_pile. If the card can be played and the playing argument is True, the card should be returned. Otherwise, the card should be added to the player's hand and the method should return None. This method should be called multiple times if the special card is a Draw 2 or Draw 4.
 
         Args:
             player (Player): The player who is drawing the card
@@ -192,11 +218,36 @@ class Game:
             Best Case Complexity:
             Worst Case Complexity:
         """
-        raise NotImplementedError
-
+        draw = self.draw_pile.pop()
+        if playing == True:
+            if draw.color == self.current_color and draw.label == self.current_label:
+                return draw
+            else:
+                player_updated = self.players.serve().add_card(draw)
+                self.players.append(player_updated)
+                while self.players.peek() != player_updated:
+                    i = self.players.serve()
+                    self.players.append(i)
+        else:
+            return draw
+            
+        # if playing == True:
+        #     drawing = True
+        #     while drawing == True:
+        #         draw = self.draw_pile.pop()
+        #         if draw.color != self.current_color and draw.label != self.current_label:
+        #             player.add_card(draw)
+        #         else:
+        #             player.add_card(draw)
+        #             drawing = False
+        # else:
+        #     player.add_card(draw)
+        
+        # return player
+                
     def next_player(self) -> Player:
         """
-        Method to get the next player
+        A method that gets the Player object of the next player (note: if current_player is None, this should simply return the Player to play the next turn). This will be helpful when you are making the next player draw cards. The method should return the Player object of the next player. This method should NOT update the current_player of the game object. This method should merely probe the next player in the order of the players.
 
         Args:
             None
@@ -208,7 +259,9 @@ class Game:
             Best Case Complexity:
             Worst Case Complexity:
         """
-        raise NotImplementedError
+        player = self.players.serve()
+        self.players.append(player)
+        return player
 
     def play_game(self) -> Player:
         """
