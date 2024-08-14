@@ -96,6 +96,7 @@ class Game:
         """
         #Use the array of Player objects being passed to this method to populate the players attribute of the Game object.
         self.players = CircularQueue(len(players))
+        
         for player in players:
             self.players.append(player)
 
@@ -148,15 +149,15 @@ class Game:
         Complexity:
             Best Case Complexity:
             Worst Case Complexity:
-        """
+        """    
         self.current_color = CardColor(RandomGen.randint(0,3))
         self.current_label = card.label
         
         #wild card mechanic
-        if card.label == 14:
-            player = self.players.serve()  
+        if card.label.name == 'DRAW_FOUR':
+            player = self.players.serve()
             for i in range(4):
-                player.add_card(self.draw_card(player, False))
+                self.draw_card(player, False)
             self.players.append(player)
 
 
@@ -175,17 +176,16 @@ class Game:
             Best Case Complexity:
             Worst Case Complexity:
         """
-        stack = ArrayStack(Constants.MAX_PLAYERS)
-        
-        while not self.players.is_empty():
-            try:
-                stack.push(self.players.serve())
-            except Exception as e:
-                break
-            
+        stack = ArrayStack(len(self.players.array))
+
+        for i in range(len(self.players.array)):
+            stack.push(self.players.array[i])
+
         self.players.clear()
-        for i in range(0, len(stack)):
+
+        for i in range(len(stack.array)):
             self.players.append(stack.pop())
+
 
     def play_skip(self) -> None:
         """
@@ -201,7 +201,7 @@ class Game:
             Best Case Complexity:
             Worst Case Complexity:
         """
-        self.players.append(self.players.serve())
+        self.current_player = self.players.peek() #could be .serve() unclear untill i implement the actual game.
 
     def draw_card(self, player: Player, playing: bool) -> Card | None:
         """
@@ -219,31 +219,19 @@ class Game:
             Worst Case Complexity:
         """
         draw = self.draw_pile.pop()
+        player_index = self.players.array.index(player)
         if playing == True:
-            if draw.color == self.current_color and draw.label == self.current_label:
-                return draw
-            else:
-                player_updated = self.players.serve().add_card(draw)
-                self.players.append(player_updated)
-                while self.players.peek() != player_updated:
-                    i = self.players.serve()
-                    self.players.append(i)
+            drawing = True
+            while drawing == True:
+                if draw.color == self.current_color or draw.label == self.current_label or draw.color.name == 'CRAZY':
+                    return draw
+                else:
+                    self.players.array[player_index].add_card(draw)
+                    draw = self.draw_pile.pop()
         else:
-            return draw
-            
-        # if playing == True:
-        #     drawing = True
-        #     while drawing == True:
-        #         draw = self.draw_pile.pop()
-        #         if draw.color != self.current_color and draw.label != self.current_label:
-        #             player.add_card(draw)
-        #         else:
-        #             player.add_card(draw)
-        #             drawing = False
-        # else:
-        #     player.add_card(draw)
-        
-        # return player
+            player.add_card(draw)
+
+            return Player
                 
     def next_player(self) -> Player:
         """
@@ -259,9 +247,8 @@ class Game:
             Best Case Complexity:
             Worst Case Complexity:
         """
-        player = self.players.serve()
-        self.players.append(player)
-        return player
+        self.players.append(self.current_player)
+        return self.players.serve()
 
     def play_game(self) -> Player:
         """
@@ -277,7 +264,57 @@ class Game:
             Best Case Complexity:
             Worst Case Complexity:
         """
-        raise NotImplementedError
+        
+        while True:
+            self.current_player = self.players.serve()
+            player_check = self.current_player #used only to check if the game has finished
+
+            print(self.current_player.position)
+
+            played = False
+
+            #TODO use an optimization algorithm
+            
+            for i in range(len(self.current_player.hand)): 
+                card = self.current_player.hand.array[i]
+                if card.color == self.current_color or card.label == self.current_label or card.color.name == "CRAZY":
+                    self.current_player.play_card(i)
+                    played = True
+                    break
+
+            print('searched')
+            if played == False:
+                print('no cards in deck')
+                card = self.draw_card(self.current_player, True)
+                card_index = self.current_player.hand.index(card)
+                self.current_player.play_card(card_index)
+            
+            self.current_color = self.discard_pile.peek().color
+            self.current_label = self.discard_pile.peek().label
+
+            self.players.append(self.current_player)
+
+            if self.current_label.name == "SKIP":
+                skipped_player = self.players.serve()
+                self.players.append(skipped_player)
+
+            elif self.current_label.name == "REVERSE":
+                self.play_reverse()
+
+            elif self.current_label.name == "DRAW_TWO":
+
+                player = self.players.serve()
+                for i in range(2):
+                    self.draw_card(player, False)
+                self.players.append(player)
+
+            elif self.current_color.name == "CRAZY":
+                self.crazy_play(self.discard_pile.peek())
+
+            if len(player_check) < 1:
+                return self.current_player
+            
+
 
 
 def test_case():
