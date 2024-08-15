@@ -266,15 +266,30 @@ class Game:
         """
         
         while True:
+            if len(self.draw_pile) < 1:
+                top_card = self.discard_pile.pop()
+                temp_array = ArrayR(len(self.discard_pile))
+                
+                for i in range(len(self.discard_pile)):
+                    temp_array[i] = self.discard_pile.pop()
+                
+                shuffled_drawpile = RandomGen.random_shuffle(temp_array)
+                self.draw_pile.clear()
+
+                for i in range(len(shuffled_drawpile)):
+                    self.draw_pile.append(shuffled_drawpile[i])
+                
+                self.discard_pile.push(top_card)
+            
             self.current_player = self.players.serve()
             player_check = self.current_player #used only to check if the game has finished
 
-            print(self.current_player.position)
+            print('\n player:', self.current_player.name)
 
             played = False
 
             #TODO use an optimization algorithm
-            
+
             for i in range(len(self.current_player.hand)): 
                 card = self.current_player.hand.array[i]
                 if card.color == self.current_color or card.label == self.current_label or card.color.name == "CRAZY":
@@ -282,12 +297,9 @@ class Game:
                     played = True
                     break
 
-            print('searched')
             if played == False:
-                print('no cards in deck')
                 card = self.draw_card(self.current_player, True)
-                card_index = self.current_player.hand.index(card)
-                self.current_player.play_card(card_index)
+                self.discard_pile.push(card)
             
             self.current_color = self.discard_pile.peek().color
             self.current_label = self.discard_pile.peek().label
