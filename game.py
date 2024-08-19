@@ -153,17 +153,34 @@ class Game:
         self.current_color = CardColor(RandomGen.randint(0,3))
         self.current_label = card.label
         
-        #wild card mechanic
-        if card.label.name == 'DRAW_FOUR':
-            player = self.players.serve()
+        #draw four card mechanic
+        if self.current_label == 'DRAW_FOUR':
+            player = self.next_player()
             for i in range(4):
-                while True:
-                    try:
-                        self.draw_card(player, False)
-                        break 
-                    except Exception as e:
-                       self.shuffle()
-            self.players.append(player)
+                try:
+                    self.draw_card(player, False)
+                except Exception as e:
+                    print("shuffled at draw 4")
+                    self.shuffle()
+                    self.draw_card(player, False)    
+            self.current_player = player
+        
+        # if card.label.name == 'DRAW_FOUR':
+        #     for i in range(len(self.players.array)):
+        #         print(self.players.array[i].name)
+        #     print('current', self.current_player.name)
+        #     self.players.append(self.current_player)
+        #     player = self.players.serve()
+        #     for i in range(4):
+        #         try:
+        #             self.draw_card(player, False)
+        #         except Exception as e:
+        #             print("shuffled at draw four")
+        #             self.shuffle()
+        #             self.draw_card(player, False)
+            
+        #     self.players.append(player)
+
 
 
     def play_reverse(self) -> None:
@@ -204,10 +221,13 @@ class Game:
         Complexity:
             Best Case Complexity:
             Worst Case Complexity:
-        """
-        skipped = self.players.serve()
+        """       
+        for i in range(self.players.length):
+            print(self.players.array[i].name)
+        print("current player",self.current_player.name)
+        
         self.players.append(self.current_player)
-        self.players.append(skipped)
+
         
 
 
@@ -227,19 +247,19 @@ class Game:
             Worst Case Complexity:
         """
         draw = self.draw_pile.pop()
-        player_index = self.players.array.index(player)
-        if playing == True:
+        
+        if playing == True: #This condition is only true if the current player is drawing
             drawing = True
             while drawing == True:
                 if draw.color == self.current_color or draw.label == self.current_label or draw.color.name == 'CRAZY':
                     return draw
                 else:
-                    self.players.array[player_index].add_card(draw)
+                    self.current_player.add_card(draw)
                     draw = self.draw_pile.pop()
         else:
-            player.add_card(draw)
+            player_index = self.players.array.index(player)
+            self.players.array[player_index].add_card(draw)
 
-            return Player
                 
     def next_player(self) -> Player:
         """
@@ -265,6 +285,7 @@ class Game:
     def shuffle(self) -> None:
         #Remember, if the draw pile is empty, the discard pile (except the top card) is shuffled and placed in the draw pile. The top card of the discard pile is then placed back on top of the discard pile. This must be done by: 
         # removing the top card of the discard pile and storing it elsewhere
+        print('shuffled at: ', len(self.draw_pile), len(self.discard_pile))
         top_card = self.discard_pile.pop()
         
         # remove each card from the top of the discard pile and add it to an array
@@ -277,7 +298,7 @@ class Game:
 
         # Start at index 0 of the shuffled array and add each card back to the draw pile, with the last index going on top of the draw pile.
         for i in range(len(temp)):
-            self.draw_pile.append(temp[i])
+            self.draw_pile.push(temp[i])
 
         # Add the stored card back to the top of the discard pile.
         self.discard_pile.push(top_card)
@@ -304,39 +325,50 @@ class Game:
             self.current_player = self.next_player() 
             cPlayer = self.current_player
             # A player can only play a card if that card has the same color or the same label as the top card of the discard pile. Alternatively, a Crazy card, or a Crazy Draw Four card can be played over any other card.
-            
             played=False
+            
             i=0
-            while played == False:
+            #print(self.current_player.name,'\n' "hand size: ", len(self.current_player.hand))
+
+            while i < len(self.current_player.hand):
                 current_card = self.current_player.hand[i]
                 if current_card.color == self.current_color or current_card.label == self.current_label or current_card.color.name == 'CRAZY':
+                    #print(f"current card: {current_card.color.name} {current_card.label.name}")
                     self.current_player.hand.delete_at_index(i)
                     self.discard_pile.push(current_card)
-                    played=True
+                    break
+                    plays+=1
                 else:
                     i+=1
+            #print("new hand size: ", len(self.current_player.hand))
             # If a player cannot play a card, they must draw a card from the draw_pile. If that card can be played, they must play it. Otherwise, they keep the card and the turn moves to the next player.
 
             if played == False:
                 try:
-                    self.draw_card(self.current_player, True)
+                    new_draw = self.draw_card(self.current_player, True)
+
                 except Exception as e:
+                    print("shuffled at card draw")
                     self.shuffle()
-                    self.draw_card(self.current_player, True)
-                      
+                    new_draw = self.draw_card(self.current_player, True)
+                
+                self.discard_pile.push(new_draw)           
+                
             #set the current color and labels
             self.current_color, self.current_label = self.discard_pile.peek().color, self.discard_pile.peek().label
-
+            
             #If a player plays a draw two card, the next player must draw two cards from the Draw Pile and cannot play either of them. The next player's turn is also skipped. For example - if Bob plays Draw 2 and Charlie is the next player, Charlie must draw 2 cards from the draw_pile and cannot play either of them. Charlie's turn is then skipped.
-
-            for i in range(2):
-                while True:
+            
+            if self.current_label == 'DRAW_TWO':
+                player = self.next_player()
+                for i in range(2):
                     try:
-                        self.draw_card(self.current_player, False)
-                        break  
+                        self.draw_card(player, False)
                     except Exception as e:
+                        print("shuffled at draw 2")
                         self.shuffle()
-                     
+                        self.draw_card(player, False)
+                self.current_player = player
             #Similarly, if a player plays a draw four card, the next player must draw four cards from the Draw Pile and cannot play either of them. The turn then moves to the next player. For example - if Bob plays Draw 4 and Charlie is the next player, Charlie must draw 4 cards from the draw_pile and cannot play either of them. Charlie's turn is then skipped.
             # If a player plays a CRAZY card, the player gets to choose the color to continue play. In our version of the game, we will be choosing a color using the given RandomGen class using the following code: CardColor(RandomGen.randint(0,3)) where RandomGen is an instance of the RandomGen class and CardColor is an enum class representing the colors of the cards. The next player can play any card of that color or a CRAZY card.
             
@@ -346,15 +378,20 @@ class Game:
             #The only circumstance for a game to momentarily continue is if the final card played is a Draw Two or Draw Four card, the next player must draw the appropriate number of cards before the game ends.
         
             #The game ends when 1 player has no cards left in their hand.
-            if len(self.current_player.hand) < 1:
-                return self.current_player
+            elif len(cPlayer.hand) < 1:
+                return cPlayer
             
             #Play Reverse
-            if self.current_label.name == 'REVERSE':
+            elif self.current_label.name == 'REVERSE':
                 self.play_reverse()
+
             #Play Skip
-            if self.current_label.name == 'SKIP':
+            elif self.current_label.name == 'SKIP':
                 self.play_skip()
+
+            print(self.current_player.name, "has played a ", self.current_color.name, self.current_label.name)
+
+            
             
 def test_case():
     players: ArrayR[Player] = ArrayR(4)
