@@ -160,11 +160,9 @@ class Game:
                 try:
                     self.draw_card(player, False)
                 except Exception as e:
-                    print("shuffled at draw 4")
                     self.shuffle()
                     self.draw_card(player, False)
             
-            print(f"{player.name} has drawed 2")
             self.players.append(player) #appends the drawing player
             self.current_player = None #ensures no duplicates
         
@@ -199,9 +197,7 @@ class Game:
         Complexity:
             Best Case Complexity:
             Worst Case Complexity:  
-        """
-        print("######## REVERSE BEING PLAYED ######## by ", self.current_player.name)
-        
+        """        
         stack = ArrayStack(self.players.length)
         stack_list =[]
 
@@ -295,7 +291,6 @@ class Game:
         return served
     
     def shuffle(self) -> None:
-        print('shuffled at: ', len(self.draw_pile), len(self.discard_pile))
         top_card = self.discard_pile.pop()
         temp = ArrayR(len(self.discard_pile))
         for i in range(len(self.discard_pile)):
@@ -329,7 +324,7 @@ class Game:
             
             i=0
 
-            while i < len(self.current_player.hand):
+            while i < self.current_player.hand.length:
                 current_card = self.current_player.hand[i]
                 if current_card.color == self.current_color or current_card.label == self.current_label or current_card.color.name == 'CRAZY':
                     self.current_player.hand.delete_at_index(i)
@@ -344,7 +339,7 @@ class Game:
                     new_draw = self.draw_card(self.current_player, True)
 
                 except Exception as e:
-                    print("shuffled at card draw")
+
                     self.shuffle()
                     new_draw = self.draw_card(self.current_player, True)
                 
@@ -361,11 +356,9 @@ class Game:
                     try:
                         self.draw_card(player, False) 
                     except Exception as e:
-                        print("shuffled at draw 2")
                         self.shuffle()
                         self.draw_card(player, False)
                 self.players.append(player)
-                print(f"{player.name} has drawed 2")
 
                 self.current_player = None
             
