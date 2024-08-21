@@ -32,7 +32,6 @@ class Game:
         self.current_color = None
         self.current_label = None
 
-
     def generate_cards(self) -> ArrayR[Card]:
         """
         Method to generate the cards for the game
@@ -91,10 +90,10 @@ class Game:
             None
 
         Complexity:
-            Best Case Complexity: 
-            Worst Case Complexity:
+            Best Case Complexity: O(log(N)) where N is the number of cards handed out. len(players)*num_cards_at_init
+            Worst Case Complexity: O(log(N)) where N is the number of cards handed out. len(players)*num_cards_at_init
         """
-        #Use the array of Player objects being passed to this method to populate the players attribute of the Game object.
+        #Use the array of Player objects being passed to this method to populate the players attribute of the Game object.        
         self.players = CircularQueue(len(players))
         
         for player in players:
@@ -103,9 +102,9 @@ class Game:
         # Call the method generate_cards to get an ArrayR of all cards
         cards_array = self.generate_cards()
 
-        #Deal the cards one by one to each player. Complexity of this part is O(N*Mlog(N))
+        #Deal the cards one by one to each player.
         dealt=0
-        for index in range(0, len(self.players)*Constants.NUM_CARDS_AT_INIT): #runs O(N*M) where N is the number of players and M is the number of cards at init
+        for index in range(0, len(self.players)*Constants.NUM_CARDS_AT_INIT): 
             player = self.players.serve()
             player.add_card(cards_array[index]) #complexity of O(log(N))
             self.players.append(player)    
@@ -148,7 +147,7 @@ class Game:
 
         Complexity:
             Best Case Complexity: O(1)
-            Worst Case Complexity: O(3N) where N is the number of cards in the discard pile being shuffled.
+            Worst Case Complexity: O(N) occurs when the card deck is empty and self.shuffle is called which has a linear time complexity.
         """    
         self.current_color = CardColor(RandomGen.randint(0,3))
         self.current_label = card.label
@@ -179,9 +178,10 @@ class Game:
             None
 
         Complexity:
-            Best Case Complexity:
-            Worst Case Complexity:  
+            Best Case Complexity: O(N) where N is the number of players in the game.
+            Worst Case Complexity: O(N) where N is the number of players in the game.
         """        
+        print('reverse played')
         stack = ArrayStack(self.players.length)
         self.players.serve() #get rid of current player who hasn't yet played the reverse card
 
@@ -208,8 +208,8 @@ class Game:
             None
 
         Complexity:
-            Best Case Complexity:
-            Worst Case Complexity:
+            Best Case Complexity: O(1) everything is constant time complexity.
+            Worst Case Complexity: O(1) everything is constant time complexity.
         """
         if self.current_player == None: #passes the test 3.7 as in a normal setting self.current_player wouldn't be empty
             skipped_player = self.players.serve()
@@ -233,24 +233,17 @@ class Game:
             Card - When drawing a playable card, other return None
 
         Complexity:
-            Best Case Complexity: O(1)
-            Worst Case Complexity: O(72+3N) where N is the number of cards being shuffled
+            Best Case Complexity: O(1) Best case ocurrs when playing is true and .pop() has a complexity of O(1)
+            Worst Case Complexity: O(N) happens when cards have to shuffle before being .pop()'d. 
         """
-        
+        if self.draw_pile.length < 1: #deal with empty draw pile 
+            self.shuffle()        
         if playing == True:
-            while True: #Worst case scenario O(72+3N) where N is the number of cards being shuffled
-                if self.draw_pile.length < 1: #deal with empty draw pile 
-                    self.shuffle() #O(3N) where N is the number of cards being shuffled from the discard pile.
-                
-                draw = self.draw_pile.pop()
-                return draw
-        else:
-            if self.draw_pile.length < 1: #deal with empty draw pile
-                self.shuffle()
-            
+            draw = self.draw_pile.pop()
+            return draw
+        else:            
             draw = self.draw_pile.pop()
             player_index = self.players.array.index(player)
-
             self.players.array[player_index].add_card(draw)
                 
     def next_player(self) -> Player:
@@ -264,8 +257,8 @@ class Game:
             Player: The next player
 
         Complexity:
-            Best Case Complexity: 
-            Worst Case Complexity:
+            Best Case Complexity: O(1) .peek() has a constant complexity
+            Worst Case Complexity: O(1) .peek() has a constant complexity
         """
         return self.players.peek()
 
@@ -279,30 +272,30 @@ class Game:
             None
 
         Complexity:
-            Best Case Complexity: O(3N) where N is the number of cards being shuffled from the discard pile.
-            Worst Case Complexity: O(3N) where N is the number of cards being shuffled from the discard pile.
+            Best Case Complexity: O(N) where N is the number of cards being shuffled from the discard pile, the runtime is linear.
+            Worst Case Complexity: O(N) where N is the number of cards being shuffled from the discard pile, the runtime is linear.
         """
         top_card = self.discard_pile.pop()
         temp = ArrayR(len(self.discard_pile))
-        for i in range(len(self.discard_pile)): #O(N) where N is the number of cards in the discard pile
+        for i in range(len(self.discard_pile)): 
             temp[i] = self.discard_pile.pop() 
-        RandomGen.random_shuffle(temp) #O(N) where N is the number of cards in temp
-        for i in range(len(temp)): #O(N) where N is the number of cards in temp
+        RandomGen.random_shuffle(temp) 
+        for i in range(len(temp)): 
             self.draw_pile.push(temp[i])
         self.discard_pile.push(top_card)
     
     def draw_two(self) -> None:
         """
         Method to draw 2 and skip the drawing player
+        Best Case Complexity: O(1)
+        Worst Case Complexity: O(1)
         """
-        self.players.serve() #clear the duplicate of current_player
+        self.players.serve()
         drawing_player = self.players.peek()
         self.players.append(self.current_player)
-        print(f"player {drawing_player.name} has {drawing_player.hand.length} cards")
+
         for _ in range(2):
             self.draw_card(drawing_player, False)
-        
-        print(f"player {drawing_player.name} now has {drawing_player.hand.length} cards")
 
         self.players.serve()
         self.players.append(drawing_player)
@@ -319,30 +312,20 @@ class Game:
             Player: The winner of the game
 
         Complexity:
-            Best Case Complexity:
-            Worst Case Complexity:
+            Best Case Complexity: O(P*C) (Where P is the number of players, and C is the number of cards in the deck)
+            Worst Case Complexity: O(P*C) (Where P is the number of players, and C is the number of cards in the deck)
             
             play_game(self) - a method that starts the game. The game should continue until a player has no cards left in their hand. The method should return a reference to the player who won the game. You should utilise the methods defined above to achieve this method's purpose. Please remember the rules of the game! Here is a summary of the rules: 
         """
-        round = 1
         while True:
-            # playersprint =[]
-            # for _ in range(len(self.players)):
-            #     playersprint.append(self.players.array[_].name)
-
-            print(f"\nRound{round}:")
-            round+=1
-
             if self.current_player != None:
                 self.players.serve() #gets rid of the first item which has been iterated in self.current_player
                 self.players.append(self.current_player) #appends the updated element
             
             self.current_player = self.next_player() #peeks the next player object
 
-            played=False
-            
+            played=False #ensures the current player has finished 
             i=0
-
             while i < len(self.current_player.hand):
                 current_card = self.current_player.hand[i]
                 if current_card.color == self.current_color or current_card.label == self.current_label or current_card.color.name == 'CRAZY':
@@ -350,53 +333,40 @@ class Game:
                     self.discard_pile.push(current_card)
                     played = True
                     break
-                else:
+                else: 
                     i+=1            
             if played == False:
                 new_draw = self.draw_card(self.current_player, True)
-                print(new_draw.color.name, new_draw.label.name)
                 if new_draw.color == self.current_color or new_draw.label == self.current_label or new_draw.color.name == 'CRAZY':
                     self.discard_pile.push(new_draw)
                     played = True           
                 else:
                     self.current_player.add_card(new_draw)
             self.current_color, self.current_label = self.discard_pile.peek().color, self.discard_pile.peek().label
-            
-            if played == True:
-                print(self.current_player.name, " plays ", self.current_color.name, self.current_label.name, ' & has cards ', self.current_player.hand.length)
-            else:
-                print(f"{self.current_player.name}, is unable to play any card. Draws a {new_draw.color.name} {new_draw.label.name}")
-            
-            cPlayer = self.current_player
 
+            cPlayer = self.current_player
             if self.current_label.name == 'DRAW_TWO' and played == True:
                 self.draw_two()
-                
-        
             if self.current_color.name == 'CRAZY' and played == True:
                 card = self.discard_pile.peek()                
                 self.crazy_play(card)
-                       
+            
             elif len(cPlayer.hand) < 1:
                 return cPlayer
             
             elif self.current_label.name == 'REVERSE' and played == True:
                 self.play_reverse()
-
             elif self.current_label.name == 'SKIP' and played == True:
                 self.play_skip()
+        return "DRAW"
 
-
-            
-
-            
-            
 def test_case():
     players: ArrayR[Player] = ArrayR(4)
     players[0] = Player("Alice", 0)
     players[1] = Player("Bob", 1)
     players[2] = Player("Charlie", 2)
     players[3] = Player("David", 3)
+
     g: Game = Game()
     g.initialise_game(players)
     winner: Player = g.play_game()
